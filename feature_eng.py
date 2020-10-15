@@ -19,7 +19,15 @@ humdf.reset_index(inplace=True)
 humdf.rename(columns={'humid_avg': 'humid_avg_lag1'}, inplace=True)
 
 wdf.merge(humdf, on='date')
+def prep_df():
+    ###################### Change the pickle to the clenaed pickle name
+    wdf = pd.read_pickle('src/EWRweather.pickle')
+    wdf.set_index('date')
+    lags = wdf.drop(columns='raining')
+    lags = lags.shift(1)
+    wdf.raining.merge(lags, left_index=True, right_index=True)
 
+    
 def set_precip_level(thresh):
     """
     Sets the threshold on precipitation level to be considered rain
