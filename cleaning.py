@@ -48,6 +48,14 @@ def set_precip_level(df, thresh):
     return df
 
 def get_df_from_sql(query):
+    """
+    Sends query to SQL for information. 
+    DEFAULT: Returns ENTIRE Table.
+    args: 
+        query (str): SQL query 
+    returns: 
+        dataframe
+    """
     connection_args = {
         'host': 'localhost', 
         'dbname': 'weather'
@@ -55,18 +63,14 @@ def get_df_from_sql(query):
     connection = pg.connect(**connection_args)
     return pd.read_sql(query, connection)
 
+def convert_to_kelvin(temp_col):
+    temp_col = temp_col.map(lambda x: (x - 32) * 5/9 + 273.15)
+    return temp_col
+
 if __name__ == "__main__":
 
-    set_precip_level(0)
+    query = "SELECT * FROM daily;"
+    wdf = get_df_from_sql(query)
 
 
-    wdf.to_pickle('src/EWRweather_cleaned.pickle')
 
-    connection_args = {
-        'host': 'localhost', 
-        'dbname': 'weather'
-    }
-
-    connection = pg.connect(**connection_args)
-    query = "SELECT * FROM daily"
-    wdf = pd.read_sql(query, connection)
