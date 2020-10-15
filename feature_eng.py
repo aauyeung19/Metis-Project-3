@@ -4,6 +4,11 @@ print(sys.version)
 import pandas as pd
 import numpy as np
 import pickle
+import cleaning
+
+query = "SELECT date, temp_avg, dp_avg, humid_avg, ws_avg, press_avg, precip FROM daily ORDER BY date"
+wdf = cleaning.get_df_from_sql(query)
+
 
 wdf = pd.read_pickle('src/EWRweather.pickle')
 
@@ -28,6 +33,19 @@ def set_precip_level(thresh):
 
     wdf['raining'] = wdf.precip.map(lambda x: int(x > thresh))
 
-set_precip_level(0.5)
+def difference(dataset, lag=1):
+    d = [(dataset[i] - dataset[i-lag]) for i in range(lag, len(dataset))]
+    return d
 
+def rolling_difference_mean(dataset, window):
+    """
+    Creates rolling difference between the current value and the mean
+    """
+    return dataset-dataset.rolling(window=window).mean()
+# n day diff
+# n day rolling average minus prev day val
+# Convert temp into Kelvin
+# Use Autoregression on humidity time series to predict the next humidity
+# features would be Humidity rolling diff, predicted humidity from trend
 
+test = pd.Series(np.linspace(0,100,101))
