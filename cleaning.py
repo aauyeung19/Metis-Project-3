@@ -40,7 +40,6 @@ def set_precip_level(df, thresh):
     args:
         df : (DataFrame) df with precipitation level
         thresh : (float) Sets the decimal threshold for how many inches of precipitation to consider it raining
-
     returns:
         df : (DataFrame) with new column with 1 or 0 for rain or no
     """
@@ -67,10 +66,21 @@ def convert_to_kelvin(temp_col):
     temp_col = temp_col.map(lambda x: (x - 32) * 5/9 + 273.15)
     return temp_col
 
+def parse_month_year(df):
+    """
+    Parse date to Month and Years
+    """
+    df['year'] = df.date.map(lambda x: x.year)
+    df['month'] = df.date.map(lambda x: x.month)
+    return df
+
 if __name__ == "__main__":
 
     query = "SELECT * FROM daily;"
     wdf = get_df_from_sql(query)
+    wdf['temp_kelvin'] = convert_to_kelvin(wdf.temp_avg)
+    wdf = parse_month_year(wdf)
+    wdf = set_precip_level(wdf, 0)
 
 
 
