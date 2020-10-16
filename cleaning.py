@@ -74,6 +74,14 @@ def parse_month_year(df):
     df['month'] = df.date.map(lambda x: x.month)
     return df
 
+def get_cleaned_df():
+    query = "SELECT date, temp_avg, dp_avg, press_avg, humid_avg, ws_avg, precip FROM daily WHERE date > '2014-01-01' ORDER BY date;"
+    wdf = get_df_from_sql(query)
+    wdf['temp_kelvin'] = convert_to_kelvin(wdf.temp_avg)
+    wdf = parse_month_year(wdf)
+    wdf = set_precip_level(wdf, 0)
+    return wdf
+
 if __name__ == "__main__":
 
     query = "SELECT * FROM daily;"

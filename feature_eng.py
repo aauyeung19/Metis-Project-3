@@ -51,20 +51,37 @@ def rolling_difference_mean(dataset, window):
     """
     return dataset-dataset.rolling(window=window).mean()
 
-
-def guess_humid(wdf, n, window=10):
+def ma_shifts(window, l, wdf, col_name):
     """
-    MA(n) model to predict the humidity using a default rolling 10 day average. 
-    args:
-        wdf (DataFrame): weather df with average humidity column
-        n (int): degree of moving average
-        
+    Calculates the rolling average based on windowsize.
+    Generates the lagged differences between the target and lags
 
-    # newtemp = Yesterday's rolling(10) average + C1 * (Lag1 error) + C2*(lag2 error)
+    args: 
+        window (int): Size of window to take moving average
+        l (int): Days of lag
+        wdf (DataFrame): weather dataframe
+        col_name (str): name of column to create lag differences
+    returns: 
+        ma_df (DataFrame): Dataframe with new lagged features
+    """
+    ma_df = wdf[[col_name]]
+    # create rolling average
+    roll_col = col_name + '_roll_' + str(window)
+    ma_df.loc[:,roll_col] = ma_df.loc[:, col_name].rolling(window=window).mean()
+    col_err = col_name + '_error'
+    ma_df[col_err] = ma_df[col_name] - ma_df[roll_col]
+    # get diff
+    # lag columns 
+    lags = range(1,l)
+    # columns_to_lag = [col_err]
+    ma_df = ma_df.assign(**{col_err+'_lag_'+str(lag_n): ma_df[col_err].shift(lag_n) for lag_n in lags}) 
+    # ma_df.drop(columns = [col_err], inplace=True)
+    return ma_df
+
+# newtemp = Yesterday's rolling(10) average + C1 * (Lag1 error) + C2*(lag2 error)
 # n day diff
 # n day rolling average minus prev day val
 # Convert temp into Kelvin
 # Use Autoregression on humidity time series to predict the next humidity
 # features would be Humidity rolling diff, predicted humidity from trend
 
-test = pd.Series(np.linspace(0,100,101))
