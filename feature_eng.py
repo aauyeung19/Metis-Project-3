@@ -19,7 +19,7 @@ humdf.reset_index(inplace=True)
 humdf.rename(columns={'humid_avg': 'humid_avg_lag1'}, inplace=True)
 
 wdf.merge(humdf, on='date')
-def prep_df():
+def prep_wdf():
     ###################### Change the pickle to the clenaed pickle name
     wdf = pd.read_pickle('src/EWRweather.pickle')
     wdf.set_index('date')
@@ -50,6 +50,17 @@ def rolling_difference_mean(dataset, window):
     Creates rolling difference between the current value and the mean
     """
     return dataset-dataset.rolling(window=window).mean()
+
+
+def guess_humid(wdf, n, window=10):
+    """
+    MA(n) model to predict the humidity using a default rolling 10 day average. 
+    args:
+        wdf (DataFrame): weather df with average humidity column
+        n (int): degree of moving average
+        
+
+    # newtemp = Yesterday's rolling(10) average + C1 * (Lag1 error) + C2*(lag2 error)
 # n day diff
 # n day rolling average minus prev day val
 # Convert temp into Kelvin
