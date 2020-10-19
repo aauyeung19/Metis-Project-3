@@ -4,10 +4,10 @@ print(sys.version)
 import pandas as pd
 import numpy as np
 import pickle
-import cleaning
+import cleaning as cl
 
 query = "SELECT date, temp_avg, dp_avg, humid_avg, ws_avg, press_avg, precip FROM daily ORDER BY date"
-wdf = cleaning.get_df_from_sql(query)
+wdf = cl.get_df_from_sql(query)
 
 
 wdf = pd.read_pickle('src/EWRweather.pickle')
@@ -45,13 +45,15 @@ def difference(dataset, lag=1):
     d = [(dataset[i] - dataset[i-lag]) for i in range(lag, len(dataset))]
     return d
 
+
+########## Not used? 
 def rolling_difference_mean(dataset, window):
     """
     Creates rolling difference between the current value and the mean
     """
     return dataset-dataset.rolling(window=window).mean()
 
-def ma_shifts(window, l, wdf, col_name):
+def ma_shifts(window, lags, wdf, col_name):
     """
     Calculates the rolling average based on windowsize.
     Generates the lagged differences between the target and lags
@@ -72,16 +74,91 @@ def ma_shifts(window, l, wdf, col_name):
     ma_df[col_err] = ma_df[col_name] - ma_df[roll_col]
     # get diff
     # lag columns 
-    lags = range(1,l)
-    # columns_to_lag = [col_err]
     ma_df = ma_df.assign(**{col_err+'_lag_'+str(lag_n): ma_df[col_err].shift(lag_n) for lag_n in lags}) 
-    # ma_df.drop(columns = [col_err], inplace=True)
     return ma_df
 
+def leading_trends(window, lags, wdf, col_name):
+    """
+    Generates the leading trend based on the number of days lagged
+
+    Similar to the ma_shifts method with minor change.  
+    Calculates the rolling average based on windowsize.
+    Generates the lagged differences between the target and lags
+    Sums the differences to get the trend of the change in the last 
+    args: 
+        window (int): Size of window to take moving average
+        l (int): Days of lag
+        wdf (DataFrame): weather dataframe
+        col_name (str): name of column to create lag differences
+    returns: 
+        ma_df (DataFrame): Dataframe with new lagged features
+    """
+    ma_df = wdf[[col_name]]
+    # create rolling average
+    roll_col = col_name + '_roll_' + str(window)
+    ma_df.loc[:,roll_col] = ma_df.loc[:, col_name].rolling(window=window).mean()
+    col_err = col_name + '_error'
+    ma_df[col_err] = ma_df[col_name] - ma_df[roll_col]
+    # get diff
+    # lag columns 
+    ma_df = ma_df.assign(**{col_err+'_lag_'+str(lag_n): ma_df[col_err].shift(lag_n) for lag_n in lags}) 
+    return ma_df
+
+def feat_eng_v1():
+    wdf = cl.get_cleaned_df()
+    wdf.sort_values(by='date', ascending=True, inplace=True)
+    
+    wdf['press_delta'] = wdf.press_avg.diff()
+
+    # set aside 2019 and 2020 data as holdout sets 
+    wdf = wdf[wdf.year<2019].copy(deep=True)
+    
+    df = ma_shifts(3, [1,5,7,10], wdf, 'temp_kelvin')
+    df = df.merge(ma_shifts(7, [1,2,3], wdf, 'press_avg'), left_index=True, right_index=True, )
+    df = df.merge(ma_shifts(7, [1,2,3], wdf, 'humid_avg'), left_index=True, right_index=True, )
+    df = df.merge(wdf[['raining', 'year', 'month']], left_index=True, right_index=True)
+
+    df.dropna(inplace=True)
+
+    return df
+
+def feat_eng_v2():
+    wdf = cl.get_cleaned_df()
+    wdf.sort_values(by='date', ascending=True, inplace=True)
+    
+    wdf['press_delta'] = wdf.press_avg.diff()
+    wdf['press_delta'] = (wdf['press_delta']>0).astype(int)
+
+    # set aside 2019 and 2020 data as holdout sets 
+    wdf = wdf[wdf.year<2019].copy(deep=True)
+    wdf['temp_trend'] = ma_shifts(3, range(1,10), wdf, 'temp_kelvin').iloc[:,2:].sum(axis=1)
+    wdf['press_trend'] = ma_shifts(3, range(1,10), wdf, 'press_avg').iloc[:,2:].sum(axis=1)
+    wdf['humid_trend'] = ma_shifts(3, range(1,10), wdf, 'humid_avg').iloc[:,2:].sum(axis=1)
+    wdf.drop(columns='date', inplace=True)
+    wdf.dropna(inplace=True)
+
+    return wdf
 # newtemp = Yesterday's rolling(10) average + C1 * (Lag1 error) + C2*(lag2 error)
 # n day diff
 # n day rolling average minus prev day val
 # Convert temp into Kelvin
 # Use Autoregression on humidity time series to predict the next humidity
 # features would be Humidity rolling diff, predicted humidity from trend
+# 
+##################
+# Linear Model function. Rolling window of 10 days. 
+# Average and lagged features for ten days passed into Linear Regression 
 
+if __name__ == "__main__":
+    wdf = cl.get_cleaned_df()
+    wdf.sort_values(by='date', ascending=True, inplace=True)
+    
+    wdf['press_delta'] = wdf.press_avg.diff()
+    wdf['press_delta'] = (wdf['press_delta']>0).astype(int)
+
+    # set aside 2019 and 2020 data as holdout sets 
+    wdf = wdf[wdf.year<2019].copy(deep=True)
+    wdf['temp_trend'] = ma_shifts(5, range(1,6), wdf, 'temp_kelvin').iloc[:,2:].sum(axis=1)
+    wdf['press_trend'] = ma_shifts(5, range(1,6), wdf, 'press_avg').iloc[:,2:].sum(axis=1)
+    wdf['humid_trend'] = ma_shifts(5, range(1,6), wdf, 'humid_avg').iloc[:,2:].sum(axis=1)
+    wdf.drop(columns='date', inplace=True)
