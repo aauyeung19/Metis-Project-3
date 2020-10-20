@@ -82,7 +82,7 @@ def clean_noaa():
     """
     Cleans noaa dataframe for joining with wunderground df
     """
-    noaa = pd.read_csv('src/NOAA_EWR.csv')
+    noaa = pd.read_csv('../src/NOAA_EWR.csv')
     noaa.DATE = pd.to_datetime(noaa.DATE)
     noaa.rename(columns={'DATE':'date'}, inplace=True)
     noaa = parse_month_year(noaa)
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     wdf = get_cleaned_df()
     print(wdf.head())
 
-    noaa = pd.read_csv('src/NOAA_EWR.csv')
+    noaa = pd.read_csv('../src/NOAA_EWR.csv')
     noaa.DATE = pd.to_datetime(noaa.DATE)
     noaa.rename(columns={'DATE':'date'}, inplace=True)
     noaa = parse_month_year(noaa)

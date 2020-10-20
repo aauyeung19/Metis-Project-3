@@ -10,7 +10,7 @@ query = "SELECT date, temp_avg, dp_avg, humid_avg, ws_avg, press_avg, precip FRO
 wdf = cl.get_df_from_sql(query)
 
 
-wdf = pd.read_pickle('src/EWRweather.pickle')
+wdf = pd.read_pickle('../src/EWRweather.pickle')
 
 humdf = wdf[['date', 'humid_avg']]
 humdf = humdf.set_index('date')
@@ -21,7 +21,7 @@ humdf.rename(columns={'humid_avg': 'humid_avg_lag1'}, inplace=True)
 wdf.merge(humdf, on='date')
 def prep_wdf():
     ###################### Change the pickle to the clenaed pickle name
-    wdf = pd.read_pickle('src/EWRweather.pickle')
+    wdf = pd.read_pickle('../src/EWRweather.pickle')
     wdf.set_index('date')
     lags = wdf.drop(columns='raining')
     lags = lags.shift(1)
@@ -129,8 +129,7 @@ def feat_eng_v2():
     wdf['press_delta'] = wdf.press_avg.diff()
     wdf['press_delta'] = (wdf['press_delta']>0).astype(int)
 
-    # set aside 2019 and 2020 data as holdout sets 
-    wdf = wdf[wdf.year<2019].copy(deep=True)
+
     wdf['temp_trend'] = ma_shifts(3, range(1,10), wdf, 'temp_kelvin').iloc[:,2:].sum(axis=1)
     wdf['press_trend'] = ma_shifts(3, range(1,10), wdf, 'press_avg').iloc[:,2:].sum(axis=1)
     wdf['humid_trend'] = ma_shifts(3, range(1,10), wdf, 'humid_avg').iloc[:,2:].sum(axis=1)
