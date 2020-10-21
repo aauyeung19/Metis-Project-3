@@ -15,6 +15,7 @@ import classification as wcl
 # import standard libraries
 import pandas as pd
 import numpy as np
+import pickle
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from imblearn.over_sampling import RandomOverSampler
@@ -28,21 +29,29 @@ y_holdout = holdout.raining[1:]
 wdf = wdf[wdf.year<2019].copy(deep=True)
 X = wdf.drop(columns=['raining'])[:-1]
 y = wdf.raining[1:]
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=None)
+# Store test and holdout in a dictionary to pickle later. 
+test_holdout = {
+    'X_test': X_test,
+    'y_test': y_test,
+    'X_holdout': X_holdout,
+    'y_holdout': y_holdout
+}
 
-ros = RandomOverSampler(random_state=None)
-X_train, y_train = ros.fit_sample(X_train,y_train)
+# Train baseline classifiers
+# baseline = wcl.baseline_classifiers(X_train, y_train, X_test, y_test)
 
+# Train Models 
 cv = StratifiedKFold(n_splits=5, shuffle=True)
-est = rf_cv(X_train, y_train, cv)
+# knn = wcl.knn_cv(X_train, y_train, cv=cv, verbose=True)
+# logreg = wcl.logreg_cv(X_train, y_train, cv=cv, verbose=True)
+xgb = wcl.xgb_cv(X_train, y_train, cv=cv, verbose=True)
+# rf = wcl.rf_cv(X_train, y_train, cv=cv, verbose=True)
 
-print(confusion_matrix(y_test, (est.predict_proba(X_test)[:,1]>0.5).astype(int)))
-print(classification_report(y_test, (est.predict_proba(X_test)[:,1]>0.5).astype(int)))
-
+# models = ['baseline', 'test_holdout', 'knn', 'logreg', 'rf']
+models = ['xgb']
 if __name__ == '__main__':
-
-    # Run simple Linear Regression on each ma result. 
-    # Use Linear Model to predict true temp.
-    # Merge Linear Model Predictions back to date df. 
-    
+    for model in models:
+        curr_model = eval(model)
+        with open(f"../models/{model}.pickle", "wb") as pfile:
+            pickle.dump(curr_model, pfile)

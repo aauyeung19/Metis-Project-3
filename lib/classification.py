@@ -7,23 +7,21 @@ Author: @Andrew Auyeung
 
 10/19/2020 - baseline still performing better than MA.   Need to fine tune Lags and Window
 """
-
+import cleaning as cl
+import feature_eng as fe
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import pickle
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, classification_report, roc_curve
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
-import cleaning as cl
-import feature_eng as fe
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE
+from imblearn.pipeline import Pipeline as imbPipeline
 
 def baseline_X_y():
     # query = "SELECT * FROM daily WHERE date>'2014-01-01' ORDER BY date;"
@@ -42,7 +40,6 @@ def baseline_X_y():
     assert len(X) == len(y), "X and y are different lengths"
     return X, y
 
-
 def elbow_knn(X, y, n_max, rs=None):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=rs)
     error_rate = []
@@ -58,9 +55,6 @@ def elbow_knn(X, y, n_max, rs=None):
     plt.plot(range(1, n_max), error_rate, marker='o', markersize=8)
 
 def baseline_classifiers(X_train, y_train, X_test, y_test, threshold = 0.5):
-    ####################################
-    # What is best practice for storing this first run?
-    ####################################
     """
     First Classification of data with wdf = fe.feat_eng_v1()
 
@@ -119,64 +113,116 @@ def baseline_classifiers(X_train, y_train, X_test, y_test, threshold = 0.5):
     plt.ylabel('True Positive Rate')
     plt.legend()
 
-    model_dict = {'knn': knn, \
+    model_dict = {
+        'knn': knn, 
         'logreg': logreg, 
         'random forest': rf,
-        'xgboost': xgb_model}
+        'xgboost': xgb_model
+    }
     return model_dict
 
-def knn_cv(X_train, y_train, cv=5):
+def knn_cv(X_train, y_train, cv=5, verbose=False):
     """
     Fits and trains the KNeighborsClassifier with a GridSearchCV
     args:
         X_train (array): Train dataset with Features
         y_train (array): Train Target
-        cv (CrossVal): Default 5 Fold CrossValidation
+        cv (object): Default 5-Fold CrossValidation
+        Verbose (bool): True to see verbose GridSearchCV 
     returns:
         model (estimator): best estimator with highest recall
     """
-    pipe = Pipeline(steps=[('scaler', StandardScaler()), ('knn', KNeighborsClassifier())])
+    pipe = imbPipeline(steps=[
+        ('sample', SMOTE()), 
+        ('scaler', StandardScaler()), 
+        ('knn', KNeighborsClassifier())
+        ])
     params = [{'knn__n_neighbors': range(2,50), 'knn__p': [1, 2]}]
 
-    model = GridSearchCV(pipe, params, cv=cv, n_jobs=-1, scoring='recall')
+    model = GridSearchCV(pipe, params, cv=cv, n_jobs=-1, scoring='recall', verbose=verbose)
     model.fit(X_train, y_train)
     return model
 
-def logreg_cv(X_train, y_train, cv=5):
+def logreg_cv(X_train, y_train, cv=5, verbose=False):
     """
     Fits and trains a Logistic Regression model with GridSearchCV
     args:
         X_train (array): Train dataset with Features
         y_train (array): Train Target
+        cv (object): Default 5-Fold CrossValidation
+        Verbose (bool): True to see verbose GridSearchCV 
     returns:
         model (estimator): best estimator with highest recall
     """
     logreg = LogisticRegression()
-    params = [{'penalty': ['l1', 'l2', 'elasticnet', 'none'],
-           'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}]
-    model = GridSearchCV(logreg, params, cv=cv, n_jobs=-1, scoring='recall')
+    params = [{
+        'logreg__penalty': ['l1', 'l2', 'elasticnet', 'none'],
+        'logreg__C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        }]
+    pipe = imbPipeline(steps=[
+        ('sample', SMOTE()), 
+        ('logreg', logreg)
+        ])
+    model = GridSearchCV(pipe, params, cv=cv, n_jobs=-1, scoring='recall', verbose=verbose)
     model.fit(X_train, y_train)
     return model
 
-def rf_cv(X_train, y_train, cv=5):
+def rf_cv(X_train, y_train, cv=5, verbose=False):
     """
     Fits and trains a Random Forest model with GridSearchCV
     args:
         X_train (array): Train dataset with Features
         y_train (array): Train Target
+        cv (object): Default 5-Fold CrossValidation
+        Verbose (bool): True to see verbose GridSearchCV 
     returns:
         model (estimator): best estimator with highest recall
     """
     rf = RandomForestClassifier()
-    params = [{'n_estimators': range(50, 550, 50), \
-            'max_depth': [5, 10, None], \
-            'min_samples_split': [2, 10, 20], \
-            'max_features': ['sqrt', 8, 10, 12], \
-            'criterion': ['gini']}]
-    model = GridSearchCV(rf, params, cv=cv, n_jobs=-1, scoring='recall', verbose=True)
+    params = [{
+        'rf__n_estimators': range(50, 550, 50),
+        'rf__max_depth': [5, 10, None], 
+        'rf__min_samples_split': [2, 10, 20],
+        'rf__max_features': ['sqrt', 8, 10, 12],
+        'rf__criterion': ['gini']
+        }]
+    pipe = imbPipeline(steps=[('sample', SMOTE()), ('rf', rf)])
+    model = GridSearchCV(pipe, params, cv=cv, n_jobs=-1, scoring='recall', verbose=verbose)
     model.fit(X_train, y_train)
     return model
 
-
-
-    
+def xgb_cv(X_train, y_train, cv=5, verbose=False):
+    """
+    Fits and trains an XGBoost model with GridsearchCV
+        args:
+        X_train (array): Train dataset with Features
+        y_train (array): Train Target
+        cv (object): Default 5-Fold CrossValidation
+        Verbose (bool): True to see verbose GridSearchCV 
+    returns:
+        model (estimator): best estimator with highest recall
+    """
+    xgb = XGBClassifier()
+    params = [{
+        'n_estimators': [100], 
+        'max_depth': [3, 5, 7, 9],
+        'learning_rate': [0.01, 0.02, 0.03, 0.05, 0.1],
+        'subsample': [0.25, 0.5, 1], 
+        'min_child_weight': [1],
+        'colsample_bytree': [.8],
+        'scale_pos_weight': [1, 10, 25, 50, 75, 99]
+    }]
+    fit_params={
+        "early_stopping_rounds":20, 
+        "eval_metric" : "auc", 
+        "eval_set" : [[X_train, y_train]],
+        "verbose": verbose
+    }
+    model = GridSearchCV(
+        estimator=xgb, 
+        param_grid=params, 
+        cv=cv,
+        n_jobs=-1,
+        scoring='roc_auc')
+    model.fit(X_train, y_train, **fit_params)
+    return model
