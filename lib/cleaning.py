@@ -148,26 +148,6 @@ def haversine(lat,lon):
     distance = R * c
     return distance
 
-def clean_hurr():
-    """
-    Reads data from the Northeast and North Central Pacific hurricane database 
-    Note: raw data from the database contains multiple tables in one CSV
-    args:
-        None
-    returns:
-        hurr (DataFrame): cleaned dataframe
-    """
-
-    # Read hurricane data
-    hurr = convert_hurr_to_df('../src/hurdat2-1851-2019-052520.txt')
-
-    hurr.lat = hurr.lat.apply(convert_lat_long)
-    hurr.lon = hurr.lon.apply(convert_lat_long)
-    # hurr = hurr.groupby(['basin', 'name', 'date','status'], as_index=False).mean()
-    hurr.date = hurr.date.map(lambda d: d[:4] + '-' + d[4:6] + '-' + d[6:])
-    hurr.date = pd.to_datetime(hurr.date)
-    hurr['distance'] = [haversine(x,y) for x,y in zip(hurr.lat, hurr.lon)]
-
 def convert_hurr_to_df(path):
     """
     Function to create a dataframe from HURDAT2
@@ -194,16 +174,68 @@ def convert_hurr_to_df(path):
     df = pd.DataFrame(df_list)
     return df
 
+def clean_hurr(path):
+    """
+    Reads data from the Northeast and North Central Pacific hurricane database 
+    Note: raw data from the database contains multiple tables in one CSV
+    args:
+        None
+    returns:
+        hurr (DataFrame): cleaned dataframe
+    """
+
+    # Read hurricane data
+    hurr = convert_hurr_to_df(path)
+
+    hurr.lat = hurr.lat.apply(convert_lat_long)
+    hurr.lon = hurr.lon.apply(convert_lat_long)
+    # hurr = hurr.groupby(['basin', 'name', 'date','status'], as_index=False).mean()
+    hurr.date = hurr.date.map(lambda d: d[:4] + '-' + d[4:6] + '-' + d[6:])
+    hurr.date = pd.to_datetime(hurr.date)
+    hurr = hurr.groupby(['basin','date', 'name', 'status'], as_index=False).mean()
+    hurr['distance'] = [haversine(x,y) for x,y in zip(hurr.lat, hurr.lon)]
+    hurr.sort_values(by='date', inplace=True)
+    hurr['distance_delta'] = hurr.groupby(['basin', 'name', 'status'], as_index=False).distance.diff()
+    return hurr
+
+def get_cleaned_hurr_df():
+    """
+    Cleans the Hurricane Database Information.
+    Filters for the closest storm to the location.
+
+    returns: wdf(DataFrame): Cleaned DataFrame for prep
+    """
+    wdf = get_cleaned_df()
+    hdf = clean_hurr('../src/hurdat2-1851-2019-052520.txt')
+    tdf = clean_hurr('../src/hurrdata.txt')
+
+    hdf = pd.concat([tdf, hdf], ignore_index=True)
+    # mask out to match the wdf
+    hdf = hdf[hdf.date>='1990-01-01']
+    # Duplicate storms.  We'll focus on the closest storm only
+    hdf_min = hdf.groupby(['date'], as_index=False).distance.min()
+    hdf = pd.merge(
+        left=hdf,
+        right=hdf_min.drop(columns='date'),
+        left_on='distance',
+        right_on='distance',
+        how='right'
+    )
+
+    # Merge back to weather data
+    wdf = wdf.merge(hdf, how='left', left_on='date', right_on='date')
+
+    #cleaning nulls
+    hurr_cats = ['basin', 'name', 'status']
+    hurr_nums = ['lat', 'lon', 'distance', 'distance_delta']
+    for each in hurr_cats:
+        wdf[each].fillna('No Storm', inplace=True)
+    for each in hurr_nums:
+        wdf[each].fillna(-9999, inplace=True)
+
+    return wdf
 
 if __name__ == "__main__":
 
     print('This is the cleaned DataFrame')
-    wdf = get_cleaned_df()
-    print(wdf.head())
-
-    noaa = pd.read_csv('../src/NOAA_EWR.csv')
-    noaa.DATE = pd.to_datetime(noaa.DATE)
-    noaa.rename(columns={'DATE':'date'}, inplace=True)
-    noaa = parse_month_year(noaa)
-    noaa = noaa[noaa.year>=1990]
-
+    wdf = get_cleaned_hurr_df()
