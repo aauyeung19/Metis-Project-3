@@ -207,9 +207,10 @@ def get_cleaned_hurr_df():
     """
     wdf = get_cleaned_df()
     hdf = clean_hurr('../src/hurdat2-1851-2019-052520.txt')
-    tdf = clean_hurr('../src/hurrdata.txt')
+    # Omit Pacific Storms
+    # tdf = clean_hurr('../src/hurrdata.txt')
 
-    hdf = pd.concat([tdf, hdf], ignore_index=True)
+    # hdf = pd.concat([tdf, hdf], ignore_index=True)
     # mask out to match the wdf
     hdf = hdf[hdf.date>='1990-01-01']
     # Duplicate storms.  We'll focus on the closest storm only
