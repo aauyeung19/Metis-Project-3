@@ -3,9 +3,6 @@
 # -*- coding: utf-8 -*-
 
 Author: @Andrew Auyeung
-
-
-10/19/2020 - baseline still performing better than MA.   Need to fine tune Lags and Window
 """
 import cleaning as cl
 import feature_eng as fe
@@ -155,9 +152,12 @@ def logreg_cv(X_train, y_train, cv=5, verbose=False):
         model (estimator): best estimator with highest recall
     """
     logreg = LogisticRegression()
+    weights = np.linspace(0.05, 0.95, 10)
     params = [{
         'logreg__penalty': ['l1', 'l2', 'elasticnet', 'none'],
-        'logreg__C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        'logreg__C': [0.001, 0.01, 0.1, 1, 10, 100, 1000], 
+        'logreg__class_weight': [{0:x, 1:1-x} for x in weights]
+
         }]
     pipe = imbPipeline(steps=[
         ('sample', SMOTE()), 
@@ -179,19 +179,21 @@ def rf_cv(X_train, y_train, cv=5, verbose=False):
         model (estimator): best estimator with highest recall
     """
     rf = RandomForestClassifier()
+    weights = np.linspace(0.05, 0.95, 10)
     params = [{
         'rf__n_estimators': range(50, 550, 50),
-        'rf__max_depth': [5, 10, None], 
+        'rf__max_depth': [5, 10], 
         'rf__min_samples_split': [2, 10, 20],
-        'rf__max_features': ['sqrt', 8, 10, 12],
-        'rf__criterion': ['gini']
+        'rf__max_features': ['sqrt', 8, 10],
+        'rf__criterion': ['gini'], 
+        'rf__class_weight': [{0:x, 1:1-x} for x in weights]
         }]
     pipe = imbPipeline(steps=[('sample', SMOTE()), ('rf', rf)])
     model = GridSearchCV(pipe, params, cv=cv, n_jobs=-1, scoring='recall', verbose=verbose)
     model.fit(X_train, y_train)
     return model
 
-def xgb_cv(X_train, y_train, cv=5, verbose=False):
+def xgb_cv(X_train, y_train, X_test, y_test, cv=5, verbose=False):
     """
     Fits and trains an XGBoost model with GridsearchCV
         args:
@@ -204,7 +206,7 @@ def xgb_cv(X_train, y_train, cv=5, verbose=False):
     """
     xgb = XGBClassifier()
     params = [{
-        'n_estimators': [100], 
+        'n_estimators': [1000], 
         'max_depth': [3, 5, 7, 9],
         'learning_rate': [0.01, 0.02, 0.03, 0.05, 0.1],
         'subsample': [0.25, 0.5, 1], 
@@ -215,7 +217,7 @@ def xgb_cv(X_train, y_train, cv=5, verbose=False):
     fit_params={
         "early_stopping_rounds":20, 
         "eval_metric" : "auc", 
-        "eval_set" : [[X_train, y_train]],
+        "eval_set" : [[X_test, y_test]],
         "verbose": verbose
     }
     model = GridSearchCV(
@@ -226,3 +228,7 @@ def xgb_cv(X_train, y_train, cv=5, verbose=False):
         scoring='roc_auc')
     model.fit(X_train, y_train, **fit_params)
     return model
+
+# REDO MODELS FOR CLASS WEIGHT vs SMOTE
+# Random Forest: class_weight={0:1, 1:2}
+# Doubles the weight of rain train data

@@ -123,7 +123,7 @@ def feat_eng_v1():
     return df
 
 def feat_eng_v2():
-    wdf = cl.get_cleaned_df()
+    wdf = cl.get_cleaned_hurr_df()
     wdf.sort_values(by='date', ascending=True, inplace=True)
     
     wdf['press_delta'] = wdf.press_avg.diff()
@@ -149,15 +149,5 @@ def feat_eng_v2():
 # Average and lagged features for ten days passed into Linear Regression 
 
 if __name__ == "__main__":
-    wdf = cl.get_cleaned_df()
-    wdf.sort_values(by='date', ascending=True, inplace=True)
+    wdf = feat_eng_v2()
     
-    wdf['press_delta'] = wdf.press_avg.diff()
-    wdf['press_delta'] = (wdf['press_delta']>0).astype(int)
-
-    # set aside 2019 and 2020 data as holdout sets 
-    wdf = wdf[wdf.year<2019].copy(deep=True)
-    wdf['temp_trend'] = ma_shifts(5, range(1,6), wdf, 'temp_kelvin').iloc[:,2:].sum(axis=1)
-    wdf['press_trend'] = ma_shifts(5, range(1,6), wdf, 'press_avg').iloc[:,2:].sum(axis=1)
-    wdf['humid_trend'] = ma_shifts(5, range(1,6), wdf, 'humid_avg').iloc[:,2:].sum(axis=1)
-    wdf.drop(columns='date', inplace=True)
