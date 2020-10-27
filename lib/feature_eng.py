@@ -6,19 +6,8 @@ import numpy as np
 import pickle
 import cleaning as cl
 
-query = "SELECT date, temp_avg, dp_avg, humid_avg, ws_avg, press_avg, precip FROM daily ORDER BY date"
-wdf = cl.get_df_from_sql(query)
+wdf = pd.DataFrame()
 
-
-wdf = pd.read_pickle('../src/EWRweather.pickle')
-
-humdf = wdf[['date', 'humid_avg']]
-humdf = humdf.set_index('date')
-humdf.shift(-1)
-humdf.reset_index(inplace=True)
-humdf.rename(columns={'humid_avg': 'humid_avg_lag1'}, inplace=True)
-
-wdf.merge(humdf, on='date')
 def prep_wdf():
     ###################### Change the pickle to the clenaed pickle name
     wdf = pd.read_pickle('../src/EWRweather.pickle')
@@ -127,13 +116,11 @@ def feat_eng_v2():
     wdf.sort_values(by='date', ascending=True, inplace=True)
     
     wdf['press_delta'] = wdf.press_avg.diff()
-    wdf['press_delta'] = (wdf['press_delta']>0).astype(int)
-
-
-    wdf['temp_trend'] = ma_shifts(3, range(1,10), wdf, 'temp_kelvin').iloc[:,2:].sum(axis=1)
-    wdf['press_trend'] = ma_shifts(3, range(1,10), wdf, 'press_avg').iloc[:,2:].sum(axis=1)
-    wdf['humid_trend'] = ma_shifts(3, range(1,10), wdf, 'humid_avg').iloc[:,2:].sum(axis=1)
-    wdf.drop(columns='date', inplace=True)
+    wdf['humid_delta'] = wdf.humid_avg.diff()
+    wdf['ws_delta'] = wdf.ws_avg.diff()
+    
+    wdf['temp_trend'] = ma_shifts(3, range(1,5), wdf, 'temp_kelvin').iloc[:,2:].sum(axis=1)
+    wdf['humid_trend'] = ma_shifts(3, range(1,5), wdf, 'humid_avg').iloc[:,2:].sum(axis=1)
     wdf.dropna(inplace=True)
 
     return wdf
@@ -149,5 +136,4 @@ def feat_eng_v2():
 # Average and lagged features for ten days passed into Linear Regression 
 
 if __name__ == "__main__":
-    wdf = feat_eng_v2()
-    
+    pass

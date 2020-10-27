@@ -2,7 +2,7 @@
 Author: @Andrew Auyeung
 
 Queries openweathermap.org API to collect 
-historical 5 day data and 7 day forcast
+historical 5 day data and 7 day forecast
 
 API Key:
 98ec6864b86b42efec56dc8a1b9abcef
@@ -13,7 +13,7 @@ https://openweathermap.org/api/one-call-api
 
 # Historical API: 
 # https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={time}&appid={API key}
-# Get Forcast:
+# Get Forecast:
 # https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={part}&appid={API key}
 import requests
 import pandas as pd
@@ -28,46 +28,44 @@ ewr = [40.6895, -74.1745]
 rdu = [35.8801, -78.7880]
 lat = float(rdu[0])
 lon = float(rdu[1])
-def get_owm(lat=lat,long=lon):
+def get_owm(lat=lat,lon=lon):
     # get current date
     now = dt.datetime.now()
 
     #start empty dataframe
-    owm_df = pd.DataFrame()
+    history_list = []
 
     #### Get History
     # Loop through 5 previous days
     for days in range(1,6):
         curr_day = int((now - dt.timedelta(days)).timestamp())
         url = f'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={curr_day}&units=imperial&appid=98ec6864b86b42efec56dc8a1b9abcef'
-
         
         page = requests.get(url)
 
         day_dict = page.json()
         today = day_dict['current']
-        day = pd.DataFrame(today)
-        owm_df = pd.concat([owm_df, day], ignore_index=True)
+        history_list.append(today)
+    
+    # owm_df = pd.DataFrame(history_list)
 
-    #### Get Forcast
+    #### Get Forecast
 
     url = f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,alerts&units=imperial&appid=98ec6864b86b42efec56dc8a1b9abcef'
     page = requests.get(url)
-    forcast = page.json()
+    forecast = page.json()
     
-    try: 
-        # Add Today's data
-        today = forcast['current']
-        today = pd.DataFrame(today)
-        owm_df = pd.concat([owm_df, today], ignore_index=True)
-    except:
-        pass
-    # Add Forcast
-    forcast = pd.DataFrame(forcast['daily'])
-    forcast.drop(columns='feels_like')
-    forcast.temp = [t['day'] for t in forcast.temp]
-    forcast.feels_like = [f['day'] for f in forcast.feels_like]
-    owm_df = pd.concat([owm_df, forcast], ignore_index=True)
+    # Add today's data
+    history_list.append(forecast['current'])
+    owm_df = pd.DataFrame(history_list)
+    owm_df['rain'] = np.zeros(len(owm_df))
+    # Add Forecast
+    
+    forecast = forecast['daily']
+    forecast = pd.DataFrame(forecast)
+    forecast.temp = [t['day'] for t in forecast.temp]
+    forecast.feels_like = [f['day'] for f in forecast.feels_like]
+    owm_df = pd.concat([owm_df, forecast], ignore_index=True)
 
     owm_df.drop(columns='weather', inplace=True)
     owm_df.drop_duplicates(inplace=True)
@@ -90,7 +88,7 @@ def get_owm(lat=lat,long=lon):
         inplace=True)
     owm_df['day'] = owm_df.date.map(lambda x: x.day)
     owm_df.drop_duplicates('day', inplace=True)
-    owm_df.head()
+    # owm_df.head()
     # Clean data
     owm_df = cl.parse_month_year(owm_df)
     owm_df['temp_kelvin'] = cl.convert_to_kelvin(owm_df.temp_avg)
