@@ -9,29 +9,10 @@ import matplotlib.dates
 import datetime
 import seaborn as sns
 
-
-#open model
-
-######### To Do: ############
-# Write load all models and predict for all possible locations given
-# Heirarchy of Dictionaries:
-# Location
-# ....Model
-# ........Predict
-# ........Proba
-# ....True
-#
-# example: cached_dict['Newark']['knn']['Predict'] should return predictions from the knn model
-#####
-# Wishlist:
-# .. add sunrise and sunset times per day 
-# .. widget for current conditions
-# .. Add storm to update storm data
-
 @st.cache(allow_output_mutation=True)
 def load_models():
     v = 5
-    vote = pickle.load(open('../models/Version 5/vote.pickle', 'rb'))
+    vote = pickle.load(open(f'../models/Version {v}/vote.pickle', 'rb'))
     knn = pickle.load(open(f'../models/Version {v}/knn.pickle', 'rb'))
     logreg = pickle.load(open(f'../models/Version {v}/logreg.pickle', 'rb'))
     rf = pickle.load(open(f'../models/Version {v}/rf.pickle', 'rb'))
@@ -62,9 +43,7 @@ def load_models():
         # Ping API
         df = owm.get_owm(lat, lon)
         # Add dummies
-        df[['month_1', 'month_2', 'month_3', 'month_4', 'month_5', 
-            'month_6', 'month_7', 'month_8', 'month_9', 'month_10', 
-            'month_11', 'month_12']] = 0
+        df[['month_1', 'month_2', 'month_3', 'month_4', 'month_5', 'month_6', 'month_7', 'month_8', 'month_9', 'month_10', 'month_11', 'month_12']] = 0
         for each in df.month:
             df['month_'+str(each)] = 1
         # Assume no current storm
@@ -79,7 +58,7 @@ def load_models():
         # Add predictions and probabilities to current location key in Dictionairy 
         data[curr_loc] = preds_dict
         data[curr_loc]['actual'] = df
-    
+        
     return data
 
 
@@ -88,31 +67,28 @@ def load_models():
 if __name__=="__main__":
     
     cached_data = load_models()
-
-    st.title('Seven Day Weather Forecast')
-
+    st.title('rain.One')
+    st.markdown('### Seven Day Forecast')
     # Select Location
-    locations = ['Newark', 'Chicago', 'Raleigh', 'Seattle', 'Los Angeles', 'Atlanta', 'Washington DC', 'Dallas', 'San Francisco']
+    locations = ['Newark', 'Chicago', 'Raleigh', 'Seattle', 'Los Angeles', 'Atlanta', 'Washington DC', 'Dallas'] # , 'San Francisco']
     loc = st.selectbox('Pick a location', locations)
     df = cached_data[loc]['actual'].copy(deep=True)
     df.sort_values(by='date', inplace=True)
     df.date = df.date.map(lambda x: x.day_name())
     # Selection of Models 
     models = ['Voting', 'KNearestNeighbors', 'LogisticRegression', 'Random Forest', 'XGBoost']
-
-    show_all = st.checkbox('Show All Estimators', value=True)
+    show_all = st.checkbox('Show All Estimators', value=False)
     if show_all:
         all_df = pd.DataFrame()
         for m in models:
             curr_df = pd.DataFrame(zip(df['date'].iloc[6:], cached_data[loc][m]['proba']), columns=['Date', 'Probability'])
             curr_df['Model'] = m
             all_df = all_df.append(curr_df, ignore_index=True)
-
-        # all_df.sort_values(by='Date', inplace=True)
-        # all_df.Date=all_df.Date.map(lambda x: x.day_name())
-        fig = sns.catplot(x='Date', y='Probability', data=all_df, kind='strip', hue='Model', legend=False, palette='Set2', height=5, aspect=1.5)
-        plt.plot(df['date'].iloc[6:], df['pop'].tail(7), label='Forecast', color='lightcoral', linewidth=4)
-        sns.scatterplot(df['date'].iloc[6:], cached_data[loc]['Voting']['preds'], label='Prediction', marker='o', s=150)
+        custom_palette = ["#029E73", "#D55E00", "#CC78BC",
+            "#CA9161", "#FBAFE4", "#949494", "#ECE133", "#56B4E9"]
+        fig = sns.catplot(x='Date', y='Probability', data=all_df, kind='strip', hue='Model', legend=False, palette=custom_palette, height=5, aspect=1.5)
+        plt.plot(df['date'].iloc[6:], cached_data[loc]['Voting']['preds'], label='Prediction', linewidth=4)
+        plt.plot(df['date'].iloc[6:], df['pop'].tail(7), label='Forecast', color='darkorange', linewidth=2) ##DE8F05
         plt.xticks(fontsize=12)
         plt.yticks(fontsize=12)
         plt.xlabel('Date', fontsize=12)
@@ -120,14 +96,11 @@ if __name__=="__main__":
         plt.title('Comparisons of Models against Prediction from OpenWeatherMap', fontsize=16)
         plt.legend(bbox_to_anchor=(1,0.7))
         plt.ylim((0,1.1))
-
         st.pyplot(fig)
-
     else:
         model = st.selectbox('Select an Estimator', models)
         preds = cached_data[loc][model]['preds']
         proba = cached_data[loc][model]['proba']
-
         pred_type = st.selectbox("How would you like to show the model's prediction?", ['Prediction', 'Probability'])
         fig = plt.figure()
         if pred_type == 'Prediction':
@@ -141,6 +114,4 @@ if __name__=="__main__":
         plt.xticks(rotation=90)
         plt.title(f'Prediction of Rain in {loc} Using {model} Estimator')
         plt.legend(bbox_to_anchor=(1,0.7))
-
         st.pyplot(fig)
-
