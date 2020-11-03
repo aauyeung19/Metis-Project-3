@@ -1,3 +1,14 @@
+"""
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+Author: @Andrew Auyeung andrew.k.auyeung@gmail.com
+Location: Metis-Project-3/lib/
+Dependencies: cleaning.py
+Functions in this module are used to prepare cleaned data for classification.
+Features are engineered to determine how they change in the leading rows.
+"""
+
 import sys
 print(sys.version)
 
@@ -5,16 +16,6 @@ import pandas as pd
 import numpy as np
 import pickle
 import cleaning as cl
-
-wdf = pd.DataFrame()
-
-def prep_wdf():
-    ###################### Change the pickle to the clenaed pickle name
-    wdf = pd.read_pickle('../src/EWRweather.pickle')
-    wdf.set_index('date')
-    lags = wdf.drop(columns='raining')
-    lags = lags.shift(1)
-    wdf.raining.merge(lags, left_index=True, right_index=True)
 
     
 def set_precip_level(thresh):
@@ -29,18 +30,6 @@ def set_precip_level(thresh):
     """
 
     wdf['raining'] = wdf.precip.map(lambda x: int(x > thresh))
-
-def difference(dataset, lag=1):
-    d = [(dataset[i] - dataset[i-lag]) for i in range(lag, len(dataset))]
-    return d
-
-
-########## Not used? 
-def rolling_difference_mean(dataset, window):
-    """
-    Creates rolling difference between the current value and the mean
-    """
-    return dataset-dataset.rolling(window=window).mean()
 
 def ma_shifts(window, lags, wdf, col_name):
     """
@@ -94,6 +83,10 @@ def leading_trends(window, lags, wdf, col_name):
     return ma_df
 
 def feat_eng_v1():
+    """
+    First round of feature engineering.  Calculating the rolling average of the
+    temperature, pressure, and humidity. 
+    """
     wdf = cl.get_cleaned_df()
     wdf.sort_values(by='date', ascending=True, inplace=True)
     
@@ -112,6 +105,10 @@ def feat_eng_v1():
     return df
 
 def feat_eng_v2():
+    """
+    Geneates a one day delta for a pressure, humidity, and wind speed
+    Determines the 5 day change in the rolling average. 
+    """
     wdf = cl.get_cleaned_hurr_df()
     wdf.sort_values(by='date', ascending=True, inplace=True)
     
@@ -124,16 +121,4 @@ def feat_eng_v2():
     wdf.dropna(inplace=True)
 
     return wdf
-# newtemp = Yesterday's rolling(10) average + C1 * (Lag1 error) + C2*(lag2 error)
-# n day diff
-# n day rolling average minus prev day val
-# Convert temp into Kelvin
-# Use Autoregression on humidity time series to predict the next humidity
-# features would be Humidity rolling diff, predicted humidity from trend
-# 
-##################
-# Linear Model function. Rolling window of 10 days. 
-# Average and lagged features for ten days passed into Linear Regression 
 
-if __name__ == "__main__":
-    pass

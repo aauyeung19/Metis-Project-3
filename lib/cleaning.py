@@ -10,7 +10,6 @@ Methods in this module are used to clean Scraped data from Wunderground and NOAA
 import pandas as pd
 import numpy as np
 import pickle
-import seaborn as sns
 import matplotlib.pyplot as plt
 import psycopg2 as pg
 import csv
@@ -123,7 +122,7 @@ def convert_lat_long(l):
     return mod*float(l[:-1])
 
 
-def haversine(lat,lon):
+def haversine(lat,lon, loc_coord=(40.6895, -74.1745)):
     """
     Returns the distance of the lat/long coord from EWR
     using the haversine formula
@@ -132,15 +131,16 @@ def haversine(lat,lon):
         long (float): longitude of storm
     returns:
         distance (float): distance from EWR in kilometers
+    
+    
     """
-    # Coordinates of EWR
-    ewr_coord = (40.6895, -74.1745)
+
     # approximate radius of earth in km
     R = 6373.0
     lat1 = math.radians(lat)
     lon1 = math.radians(lon)
-    lat2 = math.radians(ewr_coord[0])
-    lon2 = math.radians(ewr_coord[1])
+    lat2 = math.radians(loc_coord[0])
+    lon2 = math.radians(loc_coord[1])
     dlon = lon2 - lon1
     dlat = lat2 - lat1
     a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
@@ -166,13 +166,73 @@ def convert_hurr_to_df(path):
             basin = row[0]
             name = row[1].strip()
         else:
-            curr_row = dict(zip(['date', 'time', 'record_id', 'status', 'lat', 'lon', 'max_ws', 'min_press'], row[:8]))
+            curr_row = dict(
+                zip([
+                    'date', 
+                    'time', 
+                    'record_id', 
+                    'status', 
+                    'lat', 
+                    'lon', 
+                    'max_ws', 
+                    'min_press',
+                    ], row[:8]))
             curr_row['basin'] = basin
             curr_row['name'] = name
             df_list.append(curr_row)
     
     df = pd.DataFrame(df_list)
     return df
+
+def convert_hurr_to_csv(path):
+    """
+    Function to create a dataframe from HURDAT2
+    args:
+        path(str): relative path to .txt file
+    returns:
+        df(dataframe): Dataframe file
+    """
+    with open(path, newline='') as f:
+        reader = csv.reader(f)
+        data = list(reader)
+    
+    df_list = []
+    for row in data:
+        if len(row)==4:
+            basin = row[0]
+            name = row[1].strip()
+        else:
+            curr_row = dict(
+                zip([
+                    'date', 
+                    'time', 
+                    'record_id', 
+                    'status', 
+                    'lat', 
+                    'lon', 
+                    'max_ws', 
+                    'min_press',
+                    'NE34',
+                    'SE34',
+                    'SW34',
+                    'NW34',
+                    'NE50',
+                    'SE50',
+                    'SW50',
+                    'NW50',
+                    'NE64',
+                    'SE64',
+                    'SW64',
+                    'NW64',
+                    ], row))
+            curr_row['basin'] = basin
+            curr_row['name'] = name
+            df_list.append(curr_row)
+    
+    df = pd.DataFrame(df_list)
+    
+    return df
+
 
 def clean_hurr(path):
     """
@@ -240,3 +300,4 @@ if __name__ == "__main__":
 
     print('This is the cleaned DataFrame')
     wdf = get_cleaned_hurr_df()
+    wdf.head()
