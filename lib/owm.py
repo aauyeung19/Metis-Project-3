@@ -8,14 +8,9 @@ Documentation:
 https://openweathermap.org/api/one-call-api
 """
 
-# Historical API: 
-# https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={time}&appid={API key}
-# Get Forecast:
-# https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={part}&appid={API key}
 import requests
 import pandas as pd
 import numpy as np
-import cleaning as cl
 import feature_eng as fe
 import datetime as dt
 import pickle
@@ -23,11 +18,29 @@ import pickle
 api_key = pickle.load(open('api_key.pickle', 'rb'))
 # Get current date
 # Loop through date - date-5
-ewr = [40.6895, -74.1745]
-rdu = [35.8801, -78.7880]
-lat = float(rdu[0])
-lon = float(rdu[1])
-def get_owm(lat=lat,lon=lon):
+
+def parse_month_year(df):
+    """
+    Parse date to Month and Years
+    """
+    df['year'] = df.date.map(lambda x: x.year)
+    df['month'] = df.date.map(lambda x: x.month)
+    return df
+
+def convert_to_kelvin(temp_col):
+    temp_col = temp_col.map(lambda x: (x - 32) * 5/9 + 273.15)
+    return temp_col
+
+
+def get_owm(lat,lon):
+    """
+    Gets 5 day history and 7 day forecast from OpenWeatherMap.org
+    args:
+        lat (float): Latitude
+        lon (float): Longitude
+    returns:
+        owm_df (DataFrame): DataFrame with OpenWeatherMap data
+    """
     # get current date
     now = dt.datetime.now()
 
@@ -67,8 +80,11 @@ def get_owm(lat=lat,lon=lon):
     owm_df = pd.concat([owm_df, forecast], ignore_index=True)
 
     owm_df.drop(columns='weather', inplace=True)
-    owm_df.drop_duplicates(inplace=True)
-
+    try:
+        owm_df.drop_duplicates(inplace=True)
+    except:
+        pass
+    
     # Clean owm_df
     owm_df.dt = owm_df.dt.map(dt.datetime.fromtimestamp)
     owm_df.pressure = owm_df.pressure.map(lambda x: x/33.86)
@@ -89,8 +105,8 @@ def get_owm(lat=lat,lon=lon):
     owm_df.drop_duplicates('day', inplace=True)
     # owm_df.head()
     # Clean data
-    owm_df = cl.parse_month_year(owm_df)
-    owm_df['temp_kelvin'] = cl.convert_to_kelvin(owm_df.temp_avg)
+    owm_df = parse_month_year(owm_df)
+    owm_df['temp_kelvin'] = convert_to_kelvin(owm_df.temp_avg)
     owm_df.sort_values(by='date', ascending=True, inplace=True)
 
     owm_df['press_delta'] = owm_df.press_avg.diff()
@@ -107,6 +123,13 @@ def get_owm(lat=lat,lon=lon):
     owm_df.drop(columns=['day', 'visibility', 'year'], inplace=True)
     
     return owm_df
-# insert under_dp
+
 if __name__=='__main__':
-    pass
+    # Test functions
+    ewr = [40.6895, -74.1745]
+    rdu = [35.8801, -78.7880]
+    lat = float(rdu[0])
+    lon = float(rdu[1])
+    df = get_owm(lat, lon)
+    print('This is the data from RDU')
+    df.head()
