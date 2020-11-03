@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates
 import datetime
 import seaborn as sns
+import psycopg2 as pg
 
 @st.cache(allow_output_mutation=True)
 def load_models():
