@@ -1,7 +1,6 @@
 import streamlit as st
 import pickle
 import pandas as pd
-import feature_eng as fe
 import owm
 from collections import defaultdict
 import matplotlib.pyplot as plt
