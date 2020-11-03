@@ -10,7 +10,6 @@ Methods in this module are used to clean Scraped data from Wunderground and NOAA
 import pandas as pd
 import numpy as np
 import pickle
-import matplotlib.pyplot as plt
 import psycopg2 as pg
 import csv
 import math
