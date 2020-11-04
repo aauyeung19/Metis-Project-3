@@ -10,12 +10,11 @@ import seaborn as sns
 
 @st.cache(allow_output_mutation=True)
 def load_models():
-    v = 5
-    vote = pickle.load(open(f'../Version {v}/vote.pickle', 'rb'))
-    knn = pickle.load(open(f'../Version {v}/knn.pickle', 'rb'))
-    logreg = pickle.load(open(f'../Version {v}/logreg.pickle', 'rb'))
-    rf = pickle.load(open(f'../Version {v}/rf.pickle', 'rb'))
-    xgb = pickle.load(open(f'../Version {v}/xgb.pickle', 'rb'))
+    vote = pickle.load(open(f'vote.pickle', 'rb'))
+    knn = pickle.load(open(f'knn.pickle', 'rb'))
+    logreg = pickle.load(open(f'logreg.pickle', 'rb'))
+    rf = pickle.load(open(f'rf.pickle', 'rb'))
+    xgb = pickle.load(open(f'xgb.pickle', 'rb'))
     model_dict = {'Voting': vote, 'KNearestNeighbors': knn.best_estimator_, 'LogisticRegression': logreg.best_estimator_, 'Random Forest': rf.best_estimator_, 'XGBoost': xgb.best_estimator_}
     
     loc_dict = {
