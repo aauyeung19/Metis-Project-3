@@ -15,7 +15,6 @@ import feature_eng as fe
 import datetime as dt
 import pickle
 
-api_key = pickle.load(open('api_key.pickle', 'rb'))
 # Get current date
 # Loop through date - date-5
 
@@ -51,7 +50,7 @@ def get_owm(lat,lon):
     # Loop through 5 previous days
     for days in range(1,6):
         curr_day = int((now - dt.timedelta(days)).timestamp())
-        url = f'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={curr_day}&units=imperial&appid={api_key}'
+        url = f'https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&dt={curr_day}&units=imperial&appid=98ec6864b86b42efec56dc8a1b9abcef'
         
         page = requests.get(url)
 
@@ -63,7 +62,7 @@ def get_owm(lat,lon):
 
     #### Get Forecast
 
-    url = f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,alerts&units=imperial&appid={api_key}'
+    url = f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,alerts&units=imperial&appid=98ec6864b86b42efec56dc8a1b9abcef'
     page = requests.get(url)
     forecast = page.json()
     
