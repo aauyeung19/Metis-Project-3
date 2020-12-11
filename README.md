@@ -1,4 +1,4 @@
-# Project 3: Classification
+# RainOne- A classification task to predict weather
 ## Objective:
 Classify days as if it were to rain or not on the next day. 
 
