@@ -26,7 +26,7 @@ One roadblock I stumbled into was dealing with imbalanced classes.  There were v
 ### Model
 Tuning the model was another headache I had to overcome.  I wanted the model to be better at recall because I'd rather plan my day around the possibility of rain.  If I planned my day around a forecast, I'd rather the day be a false positive over a false negative.  Ultimately, the F-beta over 1 would shift the predictions too much to recall so I stayed with the base F1 score.  
 My alternative to dealing with the events was to ensemble different algorithms together that were successfull in different things.  Logistic Regression had great recall but poor precision whereas XGBoost yielded opposite results. 
-[IMAGE OF CONFUSION MATRICIES](https://github.com/aauyeung19/rainOne/blob/main/Visualizations/WeatherDeck3b.png?raw=true)
+![Confusion Matrixies for XGBoost and LogReg](https://github.com/aauyeung19/rainOne/blob/main/Visualizations/WeatherDeck3b.png?raw=true)
 At the end of this project, I had trained four models (Logistic Regression, Random Forest, KNearestNeighbors, and XGBoost) and ensembled them together using soft voting.  I placed a slightly higher weight on LogReg to still try to push the model towards recall.  
 [Image of SOFT VOTING Confusion Matrix]
 ### Implementation
