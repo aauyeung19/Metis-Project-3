@@ -7,6 +7,11 @@ A quick google search brings up some conflicting information.  [ScienceNotes.org
 This project uses classification to predict rainy events based on historical weather data focusing on climate data scrapped from Wunderground.  You can see it in action [here](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing). 
 
 [![Streamlit Video Demo of rainOne](https://github.com/aauyeung19/rainOne/blob/main/Visualizations/Streamlit_screenshot.png?raw=true)](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing)
+
+<p align="center">
+  <img src="https://github.com/aauyeung19/rainOne/blob/main/Visualizations/Streamlit_screenshot.png?raw=true" href="https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing">
+</p>
+
 *The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org*
 
 ## Motivation:
