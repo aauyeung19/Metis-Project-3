@@ -6,10 +6,15 @@ Does it mean that it will cover 50% of the location specified?  Would a frequent
 A quick google search brings up some conflicting information.  [ScienceNotes.org](https://sciencenotes.org/percent-chance-rain-mean) describes the probability of precipitation as a product of how sure the forecaster is of rain and the forecast area.  On the other hand, [Weather.gov](https://www.weather.gov/ffc/pop) states that probability of precipitation "simply describes the probability that the forecast grid/point in question will receive at least 0.01" of rain." 
 This project uses classification to predict rainy events based on historical weather data focusing on climate data scrapped from Wunderground.  You can see it in action (here)[INSERT LINK TO VIDEO HERE]
 
-## Objective:
-This project uses classification to predict rainy events based on historical weather data focusing
-I set out to attempt to predict whether or not the next day would rain.  
-Classify days as if it were to rain or not on the next day. 
+## Motivation:
+Traditionally you would anticipate a forecast to be using a time series analysis or ARIMA model so why do I use classification here?  I wanted one model that would work accurately for the entire year regardless of when the model would be used.  Weather data is also inheritely seasonal which makes it something I need to adjust for. In addition, it seems like the simplest solution considering the amount of weather services that have their entire forecasting system completed.  I decided I could leverage their predictions and 5 day histories to give my own "probability of precipitation."  
+
+## Technologies:
+* Selenium Webscraping
+* PostgreSQL
+* SciKit Learn -- Ensemble, KNN, LogReg, Random Forest, XGBoost
+* imblearn -- SMOTE, Pipelines
+* Streamlit
 
 ## Methodology
 The goal of the classification was to predict if it were to rain using given information that could have been collected from today and previous dates. 
@@ -20,11 +25,7 @@ As I tuned my classifiers, different models would perform better at different me
 Daily Summaries from Weather Underground from Newark Liberty International Airport from 1990 to 2020
 NOAA Climate report to cross reference rainy days
 
-## Technologies:
-BeautifulSoup and Selenium webscraping
-Imblearn - SMOTE
-Sklearn - KNearestNeighbors, Logistic Regression, Random Forest, XGBoost, Ensemble
-Streamlit
-
 ## Summary
 Overall, my voting classifier predicts results that are similar to existing forecasting models.  Although I trained my model only on data from Newark, NJ, the preditions were still close to that of OpenWeatherMap with matching predictions for about 5/7 days.  
+
+[Confusion matrixcies]
