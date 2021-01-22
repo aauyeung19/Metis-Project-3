@@ -12,6 +12,8 @@ This project uses classification to predict rainy events based on historical wea
   </a>
   <br>
   <span class="italic">The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org</span>
+  <br>
+  !The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org
 </p>
 
 ## Motivation:
