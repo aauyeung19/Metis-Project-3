@@ -8,9 +8,10 @@ This project uses classification to predict rainy events based on historical wea
 
 <p align="center">
   <a href="https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing">
-    <img src="https://github.com/aauyeung19/rainOne/blob/main/Visualizations/Streamlit_screenshot.png?raw=true">
+    <img alt="Streamlit Visualization Demo" src="https://github.com/aauyeung19/rainOne/blob/main/Visualizations/Streamlit_screenshot.png?raw=true">
   </a>
-  <span>\n*The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org*</span>
+  <br>
+  <span class="italic">The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org</span>
 </p>
 
 ## Motivation:
