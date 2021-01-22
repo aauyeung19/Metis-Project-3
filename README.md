@@ -32,7 +32,6 @@ At the end of this project, I had trained four models (Logistic Regression, Rand
   <img src="https://github.com/aauyeung19/rainOne/blob/main/Visualizations/WeatherDeck3a.png?raw=true">
 </p>
 
-![Confusion Matrix for Soft Voting](https://github.com/aauyeung19/rainOne/blob/main/Visualizations/WeatherDeck3a.png?raw=true)
 ### Implementation
 I pushed the model to a local webapp using Streamlit to compare its prediction against existing forecasts.  I chose to compare my model against [OpenWeatherMap](https://www.openweathermap.org).  My app would ping the API for five day historical weather features and their 7 day forecast.  The app would use the historical data as predictors for the subsequent days.  What was nice was that my model could output both hard predictions but also its own probability of precipitation.  In this case, it would only mean the probability of rain using past conditions.  What was surprising was that although I trained the model on data from EWR, it predicted similar to 5/7 days on locations with different geographic features.  
 
