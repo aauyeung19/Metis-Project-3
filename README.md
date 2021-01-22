@@ -6,7 +6,7 @@ Does it mean that it will cover 50% of the location specified?  Would a frequent
 A quick google search brings up some conflicting information.  [ScienceNotes.org](https://sciencenotes.org/percent-chance-rain-mean) describes the probability of precipitation as a product of how sure the forecaster is of rain and the forecast area.  On the other hand, [Weather.gov](https://www.weather.gov/ffc/pop) states that probability of precipitation *"simply describes the probability that the forecast grid/point in question will receive at least 0.01" of rain."* 
 This project uses classification to predict rainy events based on historical weather data focusing on climate data scrapped from Wunderground.  You can see it in action [here](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing). 
 
-![[Streamlit Video Demo of rainOne](https://github.com/aauyeung19/rainOne/blob/main/Visualizations/Streamlit_screenshot.png)](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing)
+![[Streamlit Video Demo of rainOne](https://github.com/aauyeung19/rainOne/blob/main/Visualizations/Streamlit_screenshot.png?raw=true)](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing)
 *The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org*
 
 ## Motivation:
