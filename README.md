@@ -4,7 +4,7 @@
 Have you ever looked at the weather forecast and had the question: what does 50% chance rain actually mean?
 Does it mean that it will cover 50% of the location specified?  Would a frequentist say that if we repeated the next day 100 times, 50 of those days would rain and 50 would not? 
 A quick google search brings up some conflicting information.  [ScienceNotes.org](https://sciencenotes.org/percent-chance-rain-mean) describes the probability of precipitation as a product of how sure the forecaster is of rain and the forecast area.  On the other hand, [Weather.gov](https://www.weather.gov/ffc/pop) states that probability of precipitation "simply describes the probability that the forecast grid/point in question will receive at least 0.01" of rain." 
-This project uses classification to predict rainy events based on historical weather data focusing on climate data scrapped from Wunderground.  You can see it in action [here](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing).
+This project uses classification to predict rainy events based on historical weather data focusing on climate data scrapped from Wunderground.  You can see it in action [here](https://drive.google.com/file/d/1CMlts_MTHpOTi7iND1qdTGP0xNIgBAr7/view?usp=sharing). *The solid blue line represents the predictions from my model where the solid orange line represents the weather prediction of OpenWeatherMap.org*
 
 ## Motivation:
 Traditionally you would anticipate a forecast to be using a time series analysis or ARIMA model so why do I use classification here?  I wanted one model that would work accurately for the entire year regardless of when the model would be used.  Weather data is also inheritely seasonal which makes it something I need to adjust for. In addition, it seems like the simplest solution considering the amount of weather services that have their entire forecasting system completed.  I decided I could leverage their predictions and 5 day histories to give my own "probability of precipitation."  
@@ -30,14 +30,7 @@ My alternative to dealing with the events was to ensemble different algorithms t
 At the end of this project, I had trained four models (Logistic Regression, Random Forest, KNearestNeighbors, and XGBoost) and ensembled them together using soft voting.  I placed a slightly higher weight on LogReg to still try to push the model towards recall.  
 [Image of SOFT VOTING Confusion Matrix]
 ### Implementation
-I pushed the model to a local webapp using Streamlit to compare its prediction against existing forecasts.  I chose to compare my model against [OpenWeatherMap](https://www.openweathermap.org).  My app would ping the API for five day historical weather features and their 7 day forecast.  The app would use the historical data as predictors for the subsequent days.  
+I pushed the model to a local webapp using Streamlit to compare its prediction against existing forecasts.  I chose to compare my model against [OpenWeatherMap](https://www.openweathermap.org).  My app would ping the API for five day historical weather features and their 7 day forecast.  The app would use the historical data as predictors for the subsequent days.  What was nice was that my model could output both hard predictions but also its own probability of precipitation.  In this case, it would only mean the probability of rain using past conditions.  What was surprising was that although I trained the model on data from EWR, it predicted similar to 5/7 days on locations with different geographic features.  
 
-
-## Data:
-Daily Summaries from Weather Underground from Newark Liberty International Airport from 1990 to 2020
-NOAA Climate report to cross reference rainy days
-
-## Summary
-Overall, my voting classifier predicts results that are similar to existing forecasting models.  Although I trained my model only on data from Newark, NJ, the preditions were still close to that of OpenWeatherMap with matching predictions for about 5/7 days.  
-
-[Confusion matrixcies]
+## Next Steps
+I would like to revisit this with a more robust feature selection. I only used a one day lag to check the change in conditions from the prior two days.  If I had more time I would like to investigate which lags would have the strongest importance.  If yesterday's pressure is above the rolling average of 5 days, would it be a strong indicator? 
